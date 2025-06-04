@@ -1,0 +1,27 @@
+# .github/workflows/frontend-tests.yml
+name: Frontend Build and Lint
+
+on:
+  push:
+    branches: ["main", "feature/dog-agentic"]
+  pull_request:
+    branches: ["main", "feature/dog-agentic"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Repository auschecken
+      uses: actions/checkout@v4
+
+    - name: Node.js installieren
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Abhängigkeiten installieren
+      run: npm install
+
+    - name: Build testen
+      run: npm run build

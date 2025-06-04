@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Wenn die angeforderte Datei oder das Verzeichnis existiert, liefere es aus
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+RewriteRule ^ - [L]
+
+# Andernfalls leite alle Anfragen an index.html weiter
+RewriteRule ^ /index.html
