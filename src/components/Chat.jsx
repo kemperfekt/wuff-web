@@ -120,17 +120,12 @@ function Chat() {
 
       // V3 returns single message, not array
       if (data.message) {
-        const text = data.message;
-        const delayMs = Math.max(text.length * 10, 1000); // Simulate typing delay
-
-        setTimeout(() => {
-          setLoading(false);
-          setMessages((prev) => [...prev, { 
-            text: text, 
-            sender: data.message_type || 'agent',
-            message_type: data.message_type 
-          }]);
-        }, delayMs);
+        setLoading(false);
+        setMessages((prev) => [...prev, { 
+          text: data.message, 
+          sender: data.message_type || 'agent',
+          message_type: data.message_type 
+        }]);
       }
 
       // V3 doesn't have a "done" flag - conversations are managed by the agent
