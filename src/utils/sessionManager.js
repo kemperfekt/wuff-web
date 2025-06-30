@@ -13,17 +13,20 @@ const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 class SessionManager {
   /**
-   * Store session data securely
+   * Store session data securely (V3 compatible - sessionToken optional)
    */
-  static setSession(sessionId, sessionToken) {
-    if (!sessionId || !sessionToken) {
-      console.warn('SessionManager: Invalid session data provided');
+  static setSession(sessionId, sessionToken = null) {
+    if (!sessionId) {
+      console.warn('SessionManager: Invalid session ID provided');
       return false;
     }
 
     try {
       sessionStorage.setItem(SESSION_STORAGE_KEYS.SESSION_ID, sessionId);
-      sessionStorage.setItem(SESSION_STORAGE_KEYS.SESSION_TOKEN, sessionToken);
+      // V3 doesn't use tokens, but store for V2 compatibility
+      if (sessionToken) {
+        sessionStorage.setItem(SESSION_STORAGE_KEYS.SESSION_TOKEN, sessionToken);
+      }
       sessionStorage.setItem(SESSION_STORAGE_KEYS.TIMESTAMP, Date.now().toString());
       return true;
     } catch (error) {
@@ -33,7 +36,7 @@ class SessionManager {
   }
 
   /**
-   * Retrieve session data with expiration check
+   * Retrieve session data with expiration check (V3 compatible)
    */
   static getSession() {
     try {
@@ -41,7 +44,7 @@ class SessionManager {
       const sessionToken = sessionStorage.getItem(SESSION_STORAGE_KEYS.SESSION_TOKEN);
       const timestamp = sessionStorage.getItem(SESSION_STORAGE_KEYS.TIMESTAMP);
 
-      if (!sessionId || !sessionToken || !timestamp) {
+      if (!sessionId || !timestamp) {
         return null;
       }
 
@@ -52,6 +55,7 @@ class SessionManager {
         return null;
       }
 
+      // V3 compatible: return sessionId, sessionToken optional
       return { sessionId, sessionToken };
     } catch (error) {
       console.error('SessionManager: Failed to retrieve session:', error);

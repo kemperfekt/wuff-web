@@ -9,7 +9,6 @@ function Chat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const [sessionToken, setSessionToken] = useState(null);
   const inputRef = useRef(null);
   const bottomRef = useRef(null);
 
@@ -30,26 +29,26 @@ function Chat() {
       }
       
       try {
-        const res = await fetch(`${apiUrl}/flow_intro`, {
+        const res = await fetch(`${apiUrl}/v3/start`, {
           method: 'POST',
           headers,
+          body: JSON.stringify({})
         });
         const data = await res.json();
         
-        if (data.session_id && data.session_token) {
-          // Store session securely
-          const success = SessionManager.setSession(data.session_id, data.session_token);
-          
-          if (success) {
-            setSessionId(data.session_id);
-            setSessionToken(data.session_token);
-          } else {
-            console.error('Failed to store session securely');
-          }
+        if (data.session_id) {
+          // V3 doesn't use session tokens, just session_id
+          setSessionId(data.session_id);
+          // Store session for compatibility
+          SessionManager.setSession(data.session_id, null);
         }
         
-        if (data.messages) {
-          setMessages(data.messages);
+        if (data.message) {
+          // V3 returns single message, not array
+          setMessages([{
+            text: data.message,
+            sender: data.message_type || 'agent'
+          }]);
         }
       } catch (err) {
         console.error('Session initialization failed:', err);
@@ -79,10 +78,9 @@ function Chat() {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const apiKey = import.meta.env.VITE_API_KEY;
-      const url = `${apiUrl}/flow_step`;
+      const url = `${apiUrl}/v3/message`;
       const body = JSON.stringify({ 
         session_id: sessionId, 
-        session_token: sessionToken,  // NEW: Include token
         message: input 
       });
 
@@ -91,28 +89,22 @@ function Chat() {
         headers['X-API-Key'] = apiKey;
       }
 
-      // Debug logging removed for security
-
       const response = await fetch(url, {
         method: 'POST',
         headers,
         body,
       });
-      // Response logging removed for security
 
-      // Handle session expiration
-      if (response.status === 401) {
-        console.log('Session expired, clearing session and starting new conversation');
-        // Clear session from secure storage
+      // Handle session not found (V3 returns 404 for invalid sessions)
+      if (response.status === 404) {
+        console.log('Session not found, starting new conversation');
         SessionManager.clearSession();
         setSessionId(null);
-        setSessionToken(null);
         setMessages([{
           text: 'Deine Sitzung ist abgelaufen. Bitte starte eine neue Unterhaltung.',
           sender: 'system'
         }]);
         setLoading(false);
-        // Restart conversation
         setTimeout(() => window.location.reload(), 2000);
         return;
       }
@@ -126,40 +118,27 @@ function Chat() {
         setSessionId(data.session_id);
       }
 
-      const newMessages = data.messages || [];
-      if (newMessages.length > 0) {
-        let delay = 0;
-        const readingSpeed = 100;
+      // V3 returns single message, not array
+      if (data.message) {
+        const text = data.message;
+        const delayMs = Math.max(text.length * 10, 1000); // Simulate typing delay
 
-        newMessages.forEach((msg, index) => {
-          const text = typeof msg === 'string' ? msg : (msg.text || msg.content || '');
-          const delayMs = Math.max(text.length * (1000 / readingSpeed), 1000);
-
-          setTimeout(() => {
-            if (index > 0) setLoading(true);
-          }, delay);
-
-          setTimeout(() => {
-            setLoading(false);
-            setMessages((prev) => [...prev, { ...msg, text }]);
-          }, delay + (index > 0 ? 1000 : 0));
-
-          delay += delayMs + (index > 0 ? 1000 : 0);
-        });
+        setTimeout(() => {
+          setLoading(false);
+          setMessages((prev) => [...prev, { 
+            text: text, 
+            sender: data.message_type || 'agent',
+            message_type: data.message_type 
+          }]);
+        }, delayMs);
       }
 
-      if (data.done) {
-        // Clear session when conversation is complete
-        SessionManager.clearSession();
-        setSessionId(null);
-        setSessionToken(null);
-      }
+      // V3 doesn't have a "done" flag - conversations are managed by the agent
     } catch (err) {
       console.error('Error fetching response:', err);
       // Clear invalid session on network/server errors
       SessionManager.clearSession();
       setSessionId(null);
-      setSessionToken(null);
       setMessages((prev) => [
         ...prev,
         { text: 'Serverfehler. Bitte später erneut versuchen.', sender: 'error' },
