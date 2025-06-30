@@ -36,7 +36,7 @@ function MessageBubble({ text, sender }) {
   // Check sender types
   const isUser = senderLower === 'user';
   const isError = senderLower === 'error';
-  const isDog = senderLower === 'dog' || senderLower === 'agent' || senderLower === 'response';
+  const isDog = senderLower === 'dog' || senderLower === 'agent' || senderLower === 'response' || senderLower === 'greeting';
   const isTyping = senderLower === 'typing';
   const isCoach = senderLower === 'coach';
   const isCompanion = senderLower === 'companion';
