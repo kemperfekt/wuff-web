@@ -11,24 +11,32 @@ function Chat() {
   const [sessionId, setSessionId] = useState(null);
   const inputRef = useRef(null);
   const bottomRef = useRef(null);
+  const initializingRef = useRef(false); // Prevent double initialization
 
   useEffect(() => {
     const initializeSession = async () => {
-      // Clear any existing session on app load to always get greeting
-      SessionManager.clearSession();
-      
-      // Always fetch intro to get greeting messages
-
-      // No valid session found, create new one
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const apiKey = import.meta.env.VITE_API_KEY;
-      
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
+      // Prevent duplicate initialization in React StrictMode
+      if (initializingRef.current) {
+        console.log('Initialization already in progress, skipping...');
+        return;
       }
       
+      initializingRef.current = true;
+      console.log('Starting session initialization...');
+      
       try {
+        // Clear any existing session on app load to always get greeting
+        SessionManager.clearSession();
+        
+        // No valid session found, create new one
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const apiKey = import.meta.env.VITE_API_KEY;
+        
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) {
+          headers['X-API-Key'] = apiKey;
+        }
+        
         const res = await fetch(`${apiUrl}/v3/start`, {
           method: 'POST',
           headers,
@@ -58,6 +66,11 @@ function Chat() {
             sender: 'error',
           },
         ]);
+      } finally {
+        // Allow reinitialization if needed (for reset functionality)
+        setTimeout(() => {
+          initializingRef.current = false;
+        }, 1000);
       }
     };
 

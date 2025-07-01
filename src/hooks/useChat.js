@@ -9,7 +9,7 @@
  * - Loading states
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../services/apiClient';
 
 export const useChatStates = {
@@ -26,36 +26,51 @@ export function useChat() {
   const [chatState, setChatState] = useState(useChatStates.INITIALIZING);
   const [error, setError] = useState(null);
   const [metadata, setMetadata] = useState({});
+  
+  // Track initialization to prevent duplicate calls in StrictMode
+  const initializingRef = useRef(false);
+  const initializedRef = useRef(false);
 
   /**
    * Initialize chat session
    */
   const initialize = useCallback(async () => {
+    // Prevent duplicate initialization
+    if (initializingRef.current || initializedRef.current) {
+      return;
+    }
+    
+    initializingRef.current = true;
     setChatState(useChatStates.INITIALIZING);
     setError(null);
 
-    const result = await apiClient.startConversation();
+    try {
+      const result = await apiClient.startConversation();
 
-    if (result.success) {
-      setSessionId(result.data.sessionId);
-      setMessages([{
-        id: Date.now(),
-        text: result.data.message,
-        sender: result.data.messageType || 'agent',
-        timestamp: new Date(),
-        metadata: result.data.metadata
-      }]);
-      setMetadata(result.data.metadata || {});
-      setChatState(useChatStates.READY);
-    } else {
-      setError(result.error);
-      setChatState(useChatStates.ERROR);
-      setMessages([{
-        id: Date.now(),
-        text: result.fallbackMessage,
-        sender: 'error',
-        timestamp: new Date()
-      }]);
+      if (result.success) {
+        setSessionId(result.data.sessionId);
+        setMessages([{
+          id: Date.now(),
+          text: result.data.message,
+          sender: result.data.messageType || 'agent',
+          timestamp: new Date(),
+          metadata: result.data.metadata
+        }]);
+        setMetadata(result.data.metadata || {});
+        setChatState(useChatStates.READY);
+        initializedRef.current = true;
+      } else {
+        setError(result.error);
+        setChatState(useChatStates.ERROR);
+        setMessages([{
+          id: Date.now(),
+          text: result.fallbackMessage,
+          sender: 'error',
+          timestamp: new Date()
+        }]);
+      }
+    } finally {
+      initializingRef.current = false;
     }
   }, []);
 
@@ -122,6 +137,13 @@ export function useChat() {
    * Clear chat and start new session
    */
   const resetChat = useCallback(async () => {
+    // Reset initialization flags
+    initializedRef.current = false;
+    initializingRef.current = false;
+    
+    // Reset API client flag as well
+    apiClient.isStarting = false;
+    
     setMessages([]);
     setSessionId(null);
     setError(null);
@@ -141,8 +163,20 @@ export function useChat() {
 
   // Initialize on mount
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    let mounted = true;
+    
+    const initializeChat = async () => {
+      if (mounted && !initializingRef.current && !initializedRef.current) {
+        await initialize();
+      }
+    };
+    
+    initializeChat();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []); // Empty dependency array - only run once
 
   return {
     // State
