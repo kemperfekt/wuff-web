@@ -11,6 +11,13 @@ const PORT = process.env.PORT || 4173;
 // Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
 
+// Endpoint to serve runtime configuration
+app.get('/config', (req, res) => {
+  res.json({
+    apiUrl: process.env.VITE_API_URL || 'http://localhost:8000'
+  });
+});
+
 // Handle client-side routing - serve index.html for all routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));

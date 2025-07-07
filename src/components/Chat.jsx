@@ -28,8 +28,11 @@ function Chat() {
         // Clear any existing session on app load to always get greeting
         SessionManager.clearSession();
         
+        const configRes = await fetch('/config');
+        const config = await configRes.json();
+        const apiUrl = config.apiUrl;
+
         // No valid session found, create new one
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         const apiKey = import.meta.env.VITE_API_KEY;
         
         const headers = { 'Content-Type': 'application/json' };
@@ -89,7 +92,9 @@ function Chat() {
     setLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const configRes = await fetch('/config');
+      const config = await configRes.json();
+      const apiUrl = config.apiUrl;
       const apiKey = import.meta.env.VITE_API_KEY;
       const url = `${apiUrl}/v3/message`;
       const body = JSON.stringify({ 
