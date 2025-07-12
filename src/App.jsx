@@ -1,9 +1,9 @@
 import React from 'react';
-import Chat from './components/Chat';
+import ChatWithHook from './components/ChatWithHook';
 
 function App() {
   return (
-    <Chat />
+    <ChatWithHook />
   );
 }
 

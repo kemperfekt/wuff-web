@@ -37,17 +37,23 @@ export function useChat() {
   const initialize = useCallback(async () => {
     // Prevent duplicate initialization
     if (initializingRef.current || initializedRef.current) {
+      console.log('Initialization already in progress, skipping...');
       return;
     }
     
+    console.log('Starting session initialization...');
     initializingRef.current = true;
     setChatState(useChatStates.INITIALIZING);
     setError(null);
 
     try {
+      console.log('Calling apiClient.startConversation...');
       const result = await apiClient.startConversation();
 
+      console.log('API result:', result);
+      
       if (result.success) {
+        console.log('Session started successfully:', result.data);
         setSessionId(result.data.sessionId);
         setMessages([{
           id: Date.now(),
@@ -60,6 +66,7 @@ export function useChat() {
         setChatState(useChatStates.READY);
         initializedRef.current = true;
       } else {
+        console.error('Session initialization failed:', result.error);
         setError(result.error);
         setChatState(useChatStates.ERROR);
         setMessages([{

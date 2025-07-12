@@ -29,7 +29,7 @@ if (typeof document !== 'undefined' && !document.getElementById('typing-animatio
   document.head.appendChild(style);
 }
 
-function MessageBubble({ text, sender }) {
+function MessageBubble({ text, sender, loading }) {
   // Convert sender to lowercase for consistent comparison
   const senderLower = sender && sender.toLowerCase();
   
@@ -37,7 +37,7 @@ function MessageBubble({ text, sender }) {
   const isUser = senderLower === 'user';
   const isError = senderLower === 'error';
   const isDog = senderLower === 'dog' || senderLower === 'agent' || senderLower === 'response' || senderLower === 'greeting';
-  const isTyping = senderLower === 'typing';
+  const isTyping = loading || senderLower === 'typing';
   const isCoach = senderLower === 'coach';
   const isCompanion = senderLower === 'companion';
   const isSystem = senderLower === 'system';

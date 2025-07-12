@@ -39,7 +39,10 @@ function ChatWithHook() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !isReady) return;
+    if (!input.trim() || !isReady) {
+      console.log('Cannot send:', { input: input.trim(), isReady });
+      return;
+    }
     
     const message = input;
     setInput('');
@@ -49,6 +52,7 @@ function ChatWithHook() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('Enter pressed, calling handleSend');
       handleSend();
     }
   };
@@ -99,85 +103,47 @@ function ChatWithHook() {
           style={{
             overflowY: 'auto',
             padding: '1rem',
+            paddingTop: '76px', // 60px header + 16px padding
+            paddingBottom: '96px', // 80px footer + 16px padding
             flexGrow: 1,
-            scrollBehavior: 'smooth'
+            scrollBehavior: 'smooth',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end'
           }}
         >
-          {messages.map((msg) => (
-            <div key={msg.id} style={{ marginBottom: '0.5rem' }}>
-              <MessageBubble
-                text={msg.text}
-                sender={msg.sender}
-                loading={false}
-              />
-            </div>
-          ))}
-          
-          {isLoading && chatState === useChatStates.SENDING && (
-            <div style={{ marginBottom: '0.5rem' }}>
-              <MessageBubble
-                text=""
-                sender="agent"
-                loading={true}
-              />
-            </div>
-          )}
-          
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Input Area */}
-        <div 
-          style={{
-            padding: '1rem',
-            borderTop: '1px solid #ccc',
-            backgroundColor: '#F7E5C9'
-          }}
-        >
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isReady ? "Schreibe eine Nachricht..." : "Einen Moment bitte..."
-              }
-              disabled={!isReady}
-              style={{
-                flexGrow: 1,
-                padding: '0.75rem',
-                borderRadius: '1.5rem',
-                border: '1px solid #ccc',
-                outline: 'none',
-                fontSize: '1rem',
-                backgroundColor: 'white',
-                color: '#333',
-                opacity: isReady ? 1 : 0.6
-              }}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || !isReady}
-              style={{
-                padding: '0.75rem 1.5rem',
-                borderRadius: '1.5rem',
-                border: 'none',
-                backgroundColor: (!input.trim() || !isReady) ? '#ccc' : '#4B7893',
-                color: 'white',
-                cursor: (!input.trim() || !isReady) ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                fontWeight: '500',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              {isLoading ? '...' : 'Senden'}
-            </button>
+          <div>
+            {messages.map((msg) => (
+              <div key={msg.id} style={{ marginBottom: '0.5rem' }}>
+                <MessageBubble
+                  text={msg.text}
+                  sender={msg.sender}
+                  loading={false}
+                />
+              </div>
+            ))}
+            
+            {isLoading && chatState === useChatStates.SENDING && (
+              <div style={{ marginBottom: '0.5rem' }}>
+                <MessageBubble
+                  text=""
+                  sender="agent"
+                  loading={true}
+                />
+              </div>
+            )}
+            
+            <div ref={bottomRef} />
           </div>
         </div>
 
-        <Footer />
+        <Footer 
+          input={input}
+          onInputChange={setInput}
+          onKeyDown={handleKeyDown}
+          onSend={handleSend}
+          inputRef={inputRef}
+        />
       </div>
     </div>
   );

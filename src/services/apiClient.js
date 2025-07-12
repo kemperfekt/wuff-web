@@ -16,6 +16,12 @@ class ApiClient {
     this.apiKey = import.meta.env.VITE_API_KEY;
     this.apiVersion = import.meta.env.VITE_API_VERSION || 'v3'; // Default to V3
     
+    console.log('ApiClient initialized with:', {
+      baseUrl: this.baseUrl,
+      apiVersion: this.apiVersion,
+      hasApiKey: !!this.apiKey
+    });
+    
     // Request deduplication
     this.pendingRequests = new Map();
     this.requestTimestamps = new Map();
@@ -74,7 +80,10 @@ class ApiClient {
     console.log('Starting conversation request...');
     
     try {
-      const response = await fetch(`${this.baseUrl}/${this.apiVersion}/start`, {
+      const url = `${this.baseUrl}/${this.apiVersion}/start`;
+      console.log('Fetching:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({ session_id: sessionId }),
