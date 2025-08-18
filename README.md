@@ -251,6 +251,16 @@ The frontend supports multiple API versions:
 - **V2 (Legacy)**: Basic chat functionality
 - Automatic fallback on version mismatch
 
+### Security Features
+
+The application implements several security best practices:
+- **Environment Variable Management**: Secure configuration handling
+- **Session Token Security**: Proper token storage and lifecycle management
+- **API Key Protection**: Secure API authentication
+- **Dependency Management**: Regular security updates and vulnerability monitoring
+- **Content Security**: Input validation and XSS protection measures
+- **HTTPS Ready**: SSL/TLS encryption support for production deployments
+
 ## Testing
 
 ### Running Tests
