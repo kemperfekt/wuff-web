@@ -1,354 +1,311 @@
-# WuffChat - Frontend Application
+# WuffChat Frontend
 
-A modern, secure PWA frontend for WuffChat built with Vite, React, and Tailwind CSS. Fully compatible with the V3 agentic backend architecture.
+A modern React application providing an AI-powered chat interface for dog behavioral advice.
 
-> **Note**: This frontend supports both V2 compatibility and V3 agentic API endpoints, with enhanced state management for autonomous agent interactions.
+## Overview
 
----
+WuffChat is a Progressive Web App that connects dog owners with an AI assistant specialized in canine behavior. The frontend provides a clean, intuitive chat interface where users can describe their dog's behavior and receive expert advice from the dog's perspective.
 
-## 🎯 What is WuffChat?
+**Key Highlights:**
+- Built with Vite and React for optimal performance
+- Progressive Web App with offline capabilities
+- Fully responsive design optimized for mobile devices
+- Compatible with both V2 and V3 backend APIs
 
-**WuffChat** is an AI-powered conversational assistant that helps dog owners understand their furry friends by **explaining behavior from the dog's perspective**. Using advanced AI and a comprehensive knowledge base about canine instincts, WuffChat provides empathetic, instinct-based behavioral analysis.
+## Architecture
 
-> **Technical Note**: This project is internally referred to as "DogBot" in repositories and code. WuffChat is the public-facing brand name.
-
-```mermaid
-graph LR
-    A[🧑 Dog Owner] -->|Describes Behavior| B[💬 WuffChat]
-    B -->|Analyzes| C[🧠 AI Engine]
-    C -->|Searches| D[📚 Knowledge Base]
-    D -->|Returns| E[🐕 Dog's Perspective]
-    E -->|Provides| F[💡 Training Tips]
-    F -->|Helps| A
-```
-
-## 🏗️ Architecture Overview
+### Component Structure
 
 ```mermaid
-graph TB
-    subgraph "Frontend"
-        UI[dogbot-web<br/>Vite + React PWA]
-    end
+graph TD
+    A[App.jsx] --> B[ChatWithHook.jsx]
+    B --> C[Header.jsx]
+    B --> D[MessageBubble.jsx]
+    B --> E[Footer.jsx]
+    B --> F[useChat Hook]
+    F --> G[ApiClient]
+    G --> H[SessionManager]
     
-    subgraph "Backend"
-        API[dogbot-agent<br/>FastAPI]
-        FSM[FSM Engine<br/>11 States]
-        AI[GPT-4<br/>Analysis]
-    end
-    
-    subgraph "Data Layer"
-        VDB[(Weaviate<br/>Vector DB)]
-        CACHE[(Redis<br/>Cache)]
-    end
-    
-    subgraph "Infrastructure"
-        OPS[dogbot-ops<br/>Data Management]
-        WWW[dogbot-www<br/>Landing Page]
-    end
-    
-    UI <-->|REST API| API
-    API --> FSM
-    FSM --> AI
-    API <--> VDB
-    API <--> CACHE
-    OPS -->|Manages| VDB
-    
-    style UI fill:#61DAFB,color:#000
-    style API fill:#009688,color:#fff
-    style AI fill:#412991,color:#fff
-    style VDB fill:#2C2C2C,color:#fff
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#bbf,stroke:#333,stroke-width:2px
+    style G fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
-## 🚀 Quick Start
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as React UI
+    participant Hook as useChat Hook
+    participant API as ApiClient
+    participant Backend as API Backend
+    
+    User->>UI: Sends message
+    UI->>Hook: updateMessage()
+    Hook->>API: sendMessage()
+    API->>Backend: POST /v3/message
+    Backend-->>API: Response
+    API-->>Hook: Message data
+    Hook-->>UI: Update state
+    UI-->>User: Display response
+```
+
+### Key Architectural Decisions
+
+- **Single Page Application**: Smooth user experience without page reloads
+- **Custom Hook Pattern**: Centralized state management with `useChat`
+- **API Abstraction Layer**: Clean separation between UI and backend communication
+- **Session Persistence**: Automatic session management with 30-minute timeout
+
+## Tech Stack
+
+| Category | Technology | Version | Purpose |
+|----------|------------|---------|---------|
+| **Build Tool** | Vite | 6.3.5 | Fast development and optimized builds |
+| **Framework** | React | 19.1.0 | UI component library |
+| **Styling** | Tailwind CSS | 4.1.8 | Utility-first CSS framework |
+| **Icons** | Lucide React | 0.513.0 | Consistent icon system |
+| **PWA** | Vite PWA Plugin | 1.0.0 | Progressive Web App capabilities |
+| **Server** | Express | 4.21.1 | Production static file serving |
+| **Testing** | Vitest | 3.2.2 | Unit and component testing |
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm 9+
+- Git for version control
+
+### Installation
 
 ```bash
-# Clone the meta repository
-git clone https://github.com/kemperfekt/dogbot.git
-cd dogbot
-
-# Start the backend
-cd dogbot-agent
-pip install -r requirements.txt
-export OPENAI_API_KEY=your_key_here
-uvicorn src.main:app --port 8000
-
-# In a new terminal, start the frontend
-cd ../dogbot-web
-npm install
-npm run dev
-
-# Set up environment
-cp .env.development.template .env.development
-# Edit .env.development and configure:
-# VITE_API_URL=http://localhost:8000
-# VITE_API_VERSION=v3  # or v2 for compatibility
-
-# Start development server
-npm run dev
-
-## 📦 Repository Structure
-
-| Repository | Purpose | Tech Stack | Status |
-|------------|---------|------------|--------|
-| **[dogbot-agent](https://github.com/kemperfekt/dogbot-agent)** | Backend API & AI Logic | FastAPI, GPT-4, Weaviate | ✅ Production |
-| **[dogbot-web](https://github.com/kemperfekt/dogbot-web)** | Chat Interface | Vite, React, PWA, Tailwind | ✅ Production |
-| **[dogbot-ops](https://github.com/kemperfekt/dogbot-ops)** | Data & Schema Management | Python, Content-as-Code | ✅ Active |
-| **[dogbot-www](https://github.com/kemperfekt/dogbot-www)** | Landing Page | Static HTML, Tailwind | ✅ Live |
-
-## 🧠 How It Works
-
-### Conversation Flow
-
-```mermaid
-stateDiagram-v2
-    [*] --> START
-    START --> GREETING: User starts
-    GREETING --> CONTEXT_GATHERING: Collects info
-    CONTEXT_GATHERING --> INITIAL_ASSESSMENT: Analyzes behavior
-    INITIAL_ASSESSMENT --> INSTINCT_DIAGNOSIS: Identifies instincts
-    INSTINCT_DIAGNOSIS --> DETAILED_SOLUTION: Provides tips
-    DETAILED_SOLUTION --> FEEDBACK: Asks for feedback
-    FEEDBACK --> END: Completes
-    
-    note right of INITIAL_ASSESSMENT
-        AI provides response from
-        the dog's perspective
-    end note
-    
-    note right of INSTINCT_DIAGNOSIS
-        Maps behavior to core
-        canine instincts
-    end note
-```
-
-### Core Instincts Model
-
-WuffChat analyzes behavior through four fundamental canine instincts:
-
-```mermaid
-mindmap
-  root((Dog Behavior))
-    Jagdinstinkt
-      Prey Drive
-      Chase Behavior
-      Resource Guarding
-    Territorialinstinkt
-      Space Protection
-      Boundary Setting
-      Alert Behavior
-    Rudelinstinkt
-      Pack Dynamics
-      Social Hierarchy
-      Cooperation
-    Sexualinstinkt
-      Mating Behavior
-      Competition
-      Hormonal Changes
-```
-
-## 🔧 Development
-
-### Local Development Setup
-
-Each repository has its own development environment:
-
-```bash
-# Backend development
-cd dogbot-agent
-python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-pip install -r requirements.txt
-pytest  # Run tests
-
-# Frontend development
+# Clone the repository
+git clone https://github.com/kemperfekt/dogbot-web.git
 cd dogbot-web
+
+# Install dependencies
 npm install
-npm test
 
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+# Copy environment template
+cp .env.development.template .env.development
 ```
 
-## 🔧 Features
+### Environment Configuration
 
-- ⚡ **Vite** - Lightning fast development
-- 📱 **PWA** - Installable as mobile app
-- 🎨 **Tailwind CSS** - Utility-first styling
-- 🔒 **Secure** - 0 vulnerabilities
-- 🧪 **Vitest** - Modern testing framework
-- 📦 **TypeScript Ready** - Can be gradually added
-- 🤖 **V3 Agent Support** - Enhanced for agentic interactions
-- 🔄 **Smart State Management** - React hooks for conversation flow
-- 🔌 **API Flexibility** - V2/V3 compatibility layer
+Create a `.env.development` file with:
 
-## 📱 PWA Features
-
-- **Installable**: Users can install as native app
-- **Offline Support**: Basic offline functionality
-- **Auto-Update**: Automatic updates without app store
-- **Native Feel**: Full-screen, native-like experience
-
-## 🛡️ Security
-
-- Environment variables properly configured
-- No hardcoded secrets
-- Modern dependency management
-- HTTPS ready
-
-## 🚀 Deployment
-
-### Static Hosting (Recommended)
-```bash
-npm run build
-# Upload dist/ folder to any static host
-```
-
-### Environment Variables
-```env
-VITE_API_URL=https://your-api-domain.com
-VITE_API_KEY=your_production_api_key
-VITE_API_VERSION=v3  # Use v3 for agentic features, v2 for compatibility
-VITE_DEBUG_MODE=false  # Enable for development debugging
-```
-
-**dogbot-web/.env.development**
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_API_KEY=your_api_key_here
+VITE_API_VERSION=v3
+VITE_DEBUG_MODE=true
 ```
 
-## 📊 Performance
+### Development Setup
 
-- **Bundle Size**: ~63KB gzipped
-- **Build Time**: <2 seconds
-- **Dev Server**: <50ms hot reload
-- **Lighthouse Score**: 95+ (PWA optimized)
+```bash
+# Start development server
+npm run dev
 
-## 🔄 Migration from Create React App
-
-This version replaces the old Create React App with:
-- ✅ 0 vulnerabilities (vs 9 vulnerabilities)
-- ✅ 10x faster development
-- ✅ 50% smaller bundle size
-- ✅ PWA capabilities
-- ✅ Modern tooling
-
-## V3 Integration Features
-
-### Enhanced API Client
-- **Centralized Communication**: `src/services/apiClient.js`
-- **Version Abstraction**: Automatic V2/V3 endpoint routing
-- **Error Handling**: Comprehensive error recovery and user feedback
-- **Session Management**: Automatic session lifecycle handling
-
-### React Hooks
-- **`useChat`**: Complete chat state management with V3 support
-- **Loading States**: Real-time feedback for agent processing
-- **Error Recovery**: Graceful degradation and retry mechanisms
-
-### Component Architecture
-```
-src/
-├── components/
-│   ├── Chat.jsx           # Original V2 compatible
-│   ├── ChatV3.jsx         # Enhanced V3 features
-│   └── ChatWithHook.jsx   # Hook-based implementation
-├── hooks/
-│   └── useChat.js         # V3 state management
-└── services/
-    └── apiClient.js       # V2/V3 API abstraction
+# The app will be available at http://localhost:3000
 ```
 
-### Development vs Production
-- **Development**: Debug mode with agent metadata display
-- **Production**: Optimized for user experience
-- **Testing**: Mock API responses for offline development
+## Development
 
-## 🚀 Deployment
+### Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server with hot reload |
+| `npm run build` | Create production build |
+| `npm run preview` | Preview production build locally |
+| `npm run test` | Run test suite |
+| `npm run lint` | Run ESLint checks |
+| `npm start` | Start production server |
+
+### Project Structure
+
+```
+dogbot-web/
+├── src/
+│   ├── components/        # React components
+│   │   ├── Chat.jsx      # V2 compatible chat
+│   │   ├── ChatV3.jsx    # V3 enhanced features
+│   │   └── ChatWithHook.jsx # Main chat component
+│   ├── hooks/            # Custom React hooks
+│   │   └── useChat.js    # Chat state management
+│   ├── services/         # API integration
+│   │   └── apiClient.js  # Centralized API client
+│   ├── utils/            # Utility functions
+│   │   └── sessionManager.js # Session handling
+│   └── App.jsx           # Root component
+├── public/               # Static assets
+├── server.js            # Express production server
+└── vite.config.js       # Vite configuration
+```
+
+### Component Overview
+
+**Core Components:**
+- `ChatWithHook`: Main chat interface using the custom hook
+- `Header`: Application header with branding
+- `MessageBubble`: Individual message display with avatars
+- `Footer`: Message input and send controls
+
+**Key Features:**
+- Real-time message updates
+- Typing indicators
+- Error boundaries
+- Session persistence
+- Responsive design
+
+### API Integration
+
+The `ApiClient` class provides:
+- Automatic V2/V3 endpoint routing
+- Request deduplication
+- Error handling with user-friendly messages
+- Session token management
+- Environment-based configuration
+
+## Deployment
+
+### Build Process
+
+```bash
+# Create optimized production build
+npm run build
+
+# Output will be in dist/ directory
+# - index.html (entry point)
+# - assets/ (JS, CSS, images)
+# - PWA manifest and service worker
+```
+
+### Production Deployment
+
+The application is deployed on Scalingo with automatic builds:
 
 ```mermaid
 graph LR
-    A[GitHub Push] -->|Webhook| B[Scalingo Build]
-    B -->|Deploy| C[Production]
-    C --> D[app.wuffchat.de]
-    C --> E[api.wuffchat.de]
-    C --> F[wuffchat.de]
+    A[Git Push] --> B[GitHub]
+    B --> C[Scalingo Build]
+    C --> D[NPM Install]
+    D --> E[Vite Build]
+    E --> F[Express Server]
+    F --> G[app.wuffchat.de]
 ```
 
-### Manual Deployment
+### Environment Variables
 
-```bash
-# Deploy backend
-cd dogbot-agent
-git push scalingo main
+Production environment requires:
 
-# Deploy frontend
-cd dogbot-web
-git push scalingo main
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL | `https://api.wuffchat.de` |
+| `VITE_API_KEY` | API authentication key | `your-production-key` |
+| `VITE_API_VERSION` | API version | `v3` |
+| `PORT` | Server port | `4173` |
+
+### Infrastructure Overview
+
+```mermaid
+graph TB
+    subgraph "Frontend Infrastructure"
+        A[Scalingo] --> B[Node.js Buildpack]
+        B --> C[Express Server]
+        C --> D[Static Files]
+    end
+    
+    subgraph "External Services"
+        E[Backend API]
+        F[CDN/Assets]
+    end
+    
+    D --> G[Users]
+    C --> E
+    D --> F
 ```
 
-## 📊 API Documentation
+## Features
 
-The API is fully documented with OpenAPI/Swagger:
+### Core Functionality
 
-- **Local**: http://localhost:8000/docs
-- **Production**: https://api.wuffchat.de/docs
+- **Real-time Chat**: Instant message sending and receiving
+- **Session Management**: Automatic session creation and persistence
+- **Error Recovery**: Graceful handling of network issues
+- **Responsive Design**: Optimized for all device sizes
 
-### Key Endpoints
+### PWA Capabilities
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/start-conversation` | POST | Begin new chat |
-| `/send-message` | POST | Send message |
-| `/feedback` | POST | Submit feedback |
+- **Installable**: Add to home screen on mobile devices
+- **Offline Support**: Basic functionality without network
+- **Auto-Update**: Seamless updates without app store
+- **Native Feel**: Full-screen experience
 
-## 🧪 Testing
+### API Compatibility
+
+The frontend supports multiple API versions:
+- **V3 (Default)**: Enhanced agent-based responses
+- **V2 (Legacy)**: Basic chat functionality
+- Automatic fallback on version mismatch
+
+## Testing
+
+### Running Tests
 
 ```bash
 # Run all tests
-cd dogbot-agent && pytest
-cd ../dogbot-web && npm test
+npm test
 
-# Run specific test suites
-pytest tests/test_flow_engine.py
+# Run with coverage
 npm test -- --coverage
+
+# Run in watch mode
+npm test -- --watch
 ```
 
-## 🤝 Contributing
+### Test Structure
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
+```
+src/
+├── components/__tests__/
+│   ├── Chat.test.jsx
+│   └── MessageBubble.test.jsx
+├── hooks/__tests__/
+│   └── useChat.test.js
+└── setupTests.js
+```
+
+## Contributing
 
 ### Development Workflow
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Make your changes
+4. Run tests (`npm test`)
+5. Commit changes (`git commit -m 'Add your feature'`)
+6. Push to branch (`git push origin feature/your-feature`)
+7. Open a Pull Request
 
-## 🛡️ Security & Privacy
+### Code Standards
 
-- All conversations are anonymous
-- No personal data is stored without consent
-- OpenAI API calls use anonymized prompts
-- See our [Privacy Policy](https://wuffchat.de/datenschutz.html)
+- Use ESLint configuration for code style
+- Write tests for new components
+- Keep components small and focused
+- Document complex logic
 
-## 📄 License
+### Pull Request Process
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+1. Update documentation for any API changes
+2. Ensure all tests pass
+3. Request review from maintainers
+4. Address review feedback
 
+## License
 
-## 📝 Naming Convention
-
-- **WuffChat**: Public-facing product name (used in marketing, UI, and customer communication)
-- **DogBot**: Internal technical name (used in code, repositories, and technical documentation)
-
-This dual naming allows us to maintain technical consistency while presenting a friendly brand to users.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-Built with ❤️ using Vite + React + V3 Agentic Architecture
