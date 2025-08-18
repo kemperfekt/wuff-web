@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DogBot API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .test-section { margin: 20px 0; }
+        button { padding: 10px 20px; margin: 10px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DogBot API Test</h1>
+        <p>This page tests the DogBot API integration from a browser environment to verify CORS and endpoint functionality.</p>
+        
+        <div class="test-section">
+            <h2>🔍 Test 1: Health Check</h2>
+            <button onclick="testHealthCheck()">Test Health Check</button>
+            <div id="health-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 Test 2: Flow Intro (with CORS)</h2>
+            <button onclick="testFlowIntro()">Test Flow Intro</button>
+            <div id="intro-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 Test 3: Flow Step</h2>
+            <button onclick="testFlowStep()">Test Flow Step</button>
+            <div id="step-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        const API_KEY = 'gu5xS5Dy8F4hvDJ0DlahW--QZ5nvkhxVQ2gvhu79pEk';
+        
+        let sessionData = null;
+
+        function showResult(elementId, success, message, data = null) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="${success ? 'success' : 'error'} result">
+                    <strong>${success ? '✅ SUCCESS' : '❌ ERROR'}</strong>: ${message}
+                    ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                </div>
+            `;
+        }
+
+        async function testHealthCheck() {
+            try {
+                const response = await fetch(`${API_URL}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('health-result', true, 'Health check successful', data);
+                } else {
+                    showResult('health-result', false, `Health check failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                showResult('health-result', false, `Health check error: ${error.message}`);
+            }
+        }
+
+        async function testFlowIntro() {
+            try {
+                const response = await fetch(`${API_URL}/flow_intro`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    sessionData = data; // Store for next test
+                    showResult('intro-result', true, 'Flow intro successful', {
+                        session_id: data.session_id,
+                        session_token: data.session_token ? data.session_token.substring(0, 20) + '...' : 'undefined',
+                        messages_count: data.messages ? data.messages.length : 0,
+                        first_message: data.messages && data.messages[0] ? data.messages[0].text.substring(0, 50) + '...' : 'none'
+                    });
+                } else {
+                    const errorText = await response.text();
+                    showResult('intro-result', false, `Flow intro failed: ${response.status} ${response.statusText}`, { error: errorText });
+                }
+            } catch (error) {
+                showResult('intro-result', false, `Flow intro error: ${error.message}`);
+            }
+        }
+
+        async function testFlowStep() {
+            if (!sessionData) {
+                showResult('step-result', false, 'No session data available. Please run Flow Intro test first.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/flow_step`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionData.session_id,
+                        session_token: sessionData.session_token,
+                        message: 'Hallo, mein Hund bellt sehr viel!'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('step-result', true, 'Flow step successful', {
+                        messages_count: data.messages ? data.messages.length : 0,
+                        responses: data.messages ? data.messages.map(m => `${m.sender}: ${m.text.substring(0, 50)}...`) : []
+                    });
+                } else {
+                    const errorText = await response.text();
+                    showResult('step-result', false, `Flow step failed: ${response.status} ${response.statusText}`, { error: errorText });
+                }
+            } catch (error) {
+                showResult('step-result', false, `Flow step error: ${error.message}`);
+            }
+        }
+
+        // Auto-run health check on page load
+        window.addEventListener('load', () => {
+            console.log('🚀 Page loaded, running health check...');
+            testHealthCheck();
+        });
+    </script>
+</body>
+</html>
